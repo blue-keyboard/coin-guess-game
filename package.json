@@ -1,10 +1,11 @@
 {
-  "name": "coin-guess-game",
+  "name": "coin-guess",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
+  "description": "multiplayer game with socketio",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server",
+    "dev": "nodemon server"
   },
   "keywords": [],
   "author": "",
@@ -12,5 +13,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "socket.io": "^3.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }
