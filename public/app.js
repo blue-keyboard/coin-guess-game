@@ -3,36 +3,29 @@ const gameboardContainer = document.querySelector('.container-gameboard')
 const nameInput = document.querySelector('.join-name > input')
 const joinButton = document.querySelector('.join')
 const playersInLobbyInfo = document.querySelector('.players-in-lobby > b')
-
 const welcomePopup = document.querySelector('.welcome-popups')
 const welcomePopupButton = welcomePopup.querySelector('.button')
-
 
 // player game info components
 const playerNameSpans = document.querySelectorAll('.player-name > span')
 let myNameSpan
 let myFistHand
 const playerCoinsDivs = Array.from(document.querySelectorAll('.coins'))
-
+const playerfistHandDivs = Array.from(document.querySelectorAll('.fist-hand'))
+let playerGuessDivs = Array.from(document.querySelectorAll('.guess-div'))
 const leaderboard = document.querySelector('.leaderboard')
 
 // game-info-display templates
 const gameInfoDisplay = document.querySelector('.game-info-display')
 let readyButton
 
-
-
 const socket = io();
-
-
 let playersInLobby = 0;
 let gameStarted = false;
 let myPlayer
 let allrGuessed;
 
-
 socket.emit('check-players-connected')
-
 
 socket.on('someone-connected', msg => {
     console.log(msg)
@@ -41,12 +34,9 @@ socket.on('someone-connected', msg => {
 socket.on('check-players-connected', (num, players, gameStart) => {
     playersInLobby = num
     gameStarted = gameStart
-    console.log(gameStarted)
     playersInLobbyInfo.innerHTML = num
-    console.log('enter lobby: ' + num)
 
     if (num > 0) {
-        console.log(players)
         players.filter(p => p !== null).forEach(player => {
             playerSpan = document.querySelector(`.player-name > .p${player.id}`)
             playerSpan.innerHTML = player.name
@@ -65,7 +55,6 @@ socket.on('player-disconnects', num => {
 
 
 joinButton.addEventListener('click', () => {
-
     let playerName = nameInput.value
 
     if (playerCanEnter(playerName)) {
@@ -109,10 +98,8 @@ function enterLobby(playerName) {
     socket.emit('player-enter-lobby', playerName)
     socket.on('pass-player-obj', player => {
         myPlayer = player
-        console.log(myPlayer)
         fistHandDiv = document.querySelector(`.p${myPlayer.id}.fist-hand`)
         myNameSpan = document.querySelector(`.player-name > .p${myPlayer.id}`)
-        console.log(myNameSpan)
         myNameSpan.innerHTML = myPlayer.name
         socket.emit('update-name-span', `p${myPlayer.id}`, myPlayer.name)
 
@@ -133,7 +120,6 @@ function displayReadyButtonOrRestart(myPlayer) {
 
 socket.on('update-name-spans', (spanClass, playerName) => {
     playerSpan = Array.from(playerNameSpans).filter(span => span.classList.contains(spanClass))[0]
-    console.log(playerSpan)
     playerSpan.innerHTML = playerName
 })
 
@@ -147,14 +133,11 @@ function playerIsReady(id) {
             <span>Waiting for the other players to be ready</span>
         </div>
     `
-
     socket.emit('player-is-ready', id)
 }
 
 socket.on('player-is-ready', (id, allReady) => {
     if (allReady) {
-        // gameStarted = true
-        console.log('all players are ready')
         playerNameSpans.forEach(span => span.classList.remove('highlight-green'))
         socket.emit('display-players-points')
         socket.emit('game-started')
@@ -165,12 +148,13 @@ socket.on('player-is-ready', (id, allReady) => {
 })
 
 socket.on('display-players-points', players => {
+    players = players.sort((a, b) => b.points - a.points)
     leaderboard.innerHTML = ''
     playersPointsHtml = ''
     players.forEach(player => {
         playersPointsHtml += `
             <div class="p${player.id}">
-                <div>${player.name}</p>
+                <div><b>${player.name}</b></div>
                 <div>Points: <b>${player.points}</b></div>
             </div>
         `
@@ -179,8 +163,6 @@ socket.on('display-players-points', players => {
 })
 
 socket.on('captain-choose-rounds', (id, max) => {
-    console.log(id)
-    console.log(myPlayer)
     if (myPlayer.id === id) {
         // display rounds form
         gameInfoDisplay.innerHTML = `
@@ -208,47 +190,72 @@ function giveRoundsInfo(max) {
     if (rounds < 0 || rounds > max || [...rounds].includes('.')) {
         roundsInput.classList.add('highlight-red')
     } else {
-        console.log('correct input, game starts')
         socket.emit('rounds', parseInt(rounds))
     }
 }
 
 
 // Choosing coins phase starts
-socket.on('choose-coins', () => {
-    console.log('recived')
-    gameInfoDisplay.innerHTML = `
-        <div class="choose-coins">
-            <div class="coins-div" onclick="playerCoins(0)"></div>
-            <div class="coins-div" onclick="playerCoins(1)">
-                <img class="coin-svg" src="svg/coin.svg">
+socket.on('choose-coins', (correctPlayerId, players) => {
+
+    clearHandsCoins()
+    clearPlayerGuesses()
+    if (typeof correctPlayerId === 'number') playerOutGreyName(correctPlayerId)
+
+    if (!players[myPlayer.id].out) {
+        gameInfoDisplay.innerHTML = `
+            <div class="choose-coins">
+                <div class="coins-div" onclick="playerCoins(0)"></div>
+                <div class="coins-div" onclick="playerCoins(1)">
+                    <img class="coin-svg" src="svg/coin.svg">
+                </div>
+                <div class="coins-div" onclick="playerCoins(2)">
+                    <img class="coin-svg" src="svg/coin.svg">    
+                    <img class="coin-svg" src="svg/coin.svg">    
+                </div>
+                <div class="coins-div" onclick="playerCoins(3)">
+                    <img class="coin-svg" src="svg/coin.svg">    
+                    <img class="coin-svg" src="svg/coin.svg">   
+                    <img class="coin-svg" src="svg/coin.svg">   
+                </div>
             </div>
-            <div class="coins-div" onclick="playerCoins(2)">
-                <img class="coin-svg" src="svg/coin.svg">    
-                <img class="coin-svg" src="svg/coin.svg">    
+        `
+    } else {
+        gameInfoDisplay.innerHTML = `
+            <div class="basic-info">
+                <span>Waiting for next round</span>
             </div>
-            <div class="coins-div" onclick="playerCoins(3)">
-                <img class="coin-svg" src="svg/coin.svg">    
-                <img class="coin-svg" src="svg/coin.svg">   
-                <img class="coin-svg" src="svg/coin.svg">   
-            </div>
-        </div>
-    `
+        `
+    }
+
+    function playerOutGreyName(id) {
+        const playerNameSpan = document.querySelector(`.player-name > .p${id}`)
+        playerNameSpan.classList.add('grey-name')
+    }
+
+    function clearHandsCoins() {
+        playerCoinsDivs.forEach(div => div.innerHTML = '')
+        playerfistHandDivs.forEach(div => div.innerHTML = '')
+    }
+
+    function clearPlayerGuesses() {
+        playerGuessDivs.forEach(div => {
+            if (div.firstElementChild) div.removeChild(div.firstElementChild)
+        })
+    }
 })
+
 
 function playerCoins(num) {
     myPlayer.coins = num;
-
     gameInfoDisplay.innerHTML = `
         <div class="basic-info">
             <span>Waiting for the rest of the players...</span>
         </div>
     `
-
     fistHandDiv.innerHTML = `
         <img class="hand-svg" src="svg/fist.svg">
     `
-
     socket.emit('player-coins', num, myPlayer.id)
 }
 
@@ -260,8 +267,6 @@ socket.on('display-player-fist', id => {
 })
 
 socket.on('guessing-phase', (turn, players, turnOrder, allreadyGuessed) => {
-    console.log(turn, players, turnOrder, allreadyGuessed)
-
     allrGuessed = allreadyGuessed
 
     if (myPlayer.id === turn) {
@@ -281,38 +286,32 @@ socket.on('guessing-phase', (turn, players, turnOrder, allreadyGuessed) => {
     }
 })
 function playerGuess() {
-    console.log(allrGuessed)
     const guessInput = document.querySelector('.input-guess > input')
     let guess = guessInput.value
 
     if (parseInt(guess) < 0 || [...guess].includes('.') || allrGuessed.includes(parseInt(guess))) {
         guessInput.classList.add('highlight-red')
     } else {
+        myNameSpan.classList.remove('outline-name-black')
         socket.emit('display-player-guess', myPlayer.id, guess)
         socket.emit('a-player-guessed', myPlayer.id, parseInt(guess))
     }
 }
 
 socket.on('display-player-guess', (id, guess) => {
-    console.log(id, guess)
-    console.log('working')
     const playerGuessDiv = document.querySelector(`.p${id}.guess-div`)
     playerGuessDiv.innerHTML = `
-        <div class="guess">Guess: <b>${guess}</b></div>
+        <div class="guess p${id}">Guess: <b>${guess}</b></div>
     `
 })
 
 socket.on('show-results', players => {
-
     let result = players.reduce((acc, player) => acc + player.coins, 0)
+    let correctPlayer
 
     gameInfoDisplay.innerHTML = ''
 
-    //display coins for everyplayer
-
     players.forEach(player => {
-
-
         let playerFistHandDiv = document.querySelector(`.p${player.id}.fist-hand`)
         playerFistHandDiv.innerHTML = '<img class="hand-svg" src="svg/open-hand.svg"></img>'
 
@@ -322,14 +321,75 @@ socket.on('show-results', players => {
         playerCoinDiv.innerHTML = insertCoinsHTML;
     })
 
-    setInterval(() => {
-        gameInfoDisplay.innerHTML = `
-            <span class="result">${result}</span>
-        `
-    }, 1000 + (players.length - 2) * 500)
+    setTimeout(displayResult, 1500)
+    setTimeout(displayWhoCorrect, 1500 + 700)
+    setTimeout(emitPhaseDoneToServer, 1500 + 700 + 2000)
 
+    function displayResult() {
+        gameInfoDisplay.innerHTML = `<span class="result">${result}</span>`
+        correctPlayer = players.find(player => player.guess === result)
+    }
+
+    function displayWhoCorrect() {
+        if (correctPlayer) {
+            playerGuessDivs.forEach(div => {
+                const span = div.firstElementChild
+                if (span) {
+                    if (span.classList.contains(`p${correctPlayer.id}`)) span.classList.add('highlight-green')
+                    else span.classList.add('highlight-red')
+                }
+            })
+        } else {
+            playerGuessDivs.forEach(div => {
+                if (div.firstElementChild) div.firstElementChild.classList.add('highlight-red')
+            })
+        }
+    }
+
+    function emitPhaseDoneToServer() {
+        if (myPlayer.id === players[0].id) {
+            socket.emit('result-phase-done', correctPlayer)
+        }
+    }
 })
 
+socket.on('remove-grey-names', () => {
+    playerNameSpans.forEach(span => span.classList.remove('grey-name'))
+})
+
+
+socket.on('loser-choose-id', id => {
+    if (myPlayer.id === id) {
+        gameInfoDisplay.innerHTML = `
+            <div class="input-new-first">
+                <div><b>New first:</b></div>
+                <input autocomplete="off" class="input-int" min="1" name="rounds" placeholder="" type="number">
+                <div class="button rounds-button" onclick="loserInputNewFirst()">OK</div>   
+            </div>
+        `
+    } else {
+        const loserName = document.querySelector(`.player-name > .p${id}`).innerHTML
+        gameInfoDisplay.innerHTML = `
+            <div class="basic-info">
+                <span>${loserName} is choosing who goes first this round...</span>
+            </div>
+        `
+    }
+})
+
+function loserInputNewFirst() {
+    const newFirstInput = document.querySelector('.input-new-first > input')
+    let newFirstId = parseInt(newFirstInput.value)
+    socket.emit('loser-chose-first', newFirstId)
+}
+
+socket.on('game-ends', () => {
+    gameInfoDisplay.innerHTML = `
+        <div class="basic-info">
+            <span>GAME ENDED refresh the page</span>
+        </div>
+    `
+})
 
 
 

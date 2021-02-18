@@ -23,6 +23,7 @@ body {
 .header {
     height: 80px;
     background-color: #CA5164;
+    /* background-color: #675C5D; */
     color: #ECD797;
     display:flex;
     align-items: center;
@@ -52,7 +53,9 @@ body {
 
 .container-gameboard {
     height: 90%;
-    background-color: #675C5D
+    background-color: #4e4446;
+    /* background-color: #685d5e; */
+    /* background-color: #9ACFBE; */
 }
 
 
@@ -154,19 +157,13 @@ body {
     width: 752px;
     border-radius: 1000px;
     background-color: #9ACFBE;
+    /* background-color: #CA5164; */
     overflow: hidden;
-}
-
-.table > div {
-    /* outline: 1px solid grey; */
-    /* background-color: rosybrown; */
 }
 
 .pad-rl-25 {
     padding: 0 25%;
 }
-
-
 
 /* leaderboard */
 .leaderboard {
@@ -179,9 +176,18 @@ body {
 }
 
 .leaderboard > div {
-    width: 22%;
-    margin: 0.5rem;
+    width: 18%;
+    margin: 0.5rem 1.5rem;
     background-color: whitesmoke;
+    padding: 0.5rem 0;
+    border-radius: 28px;
+}
+
+.leaderboard > div > div {
+    height: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 
@@ -267,6 +273,7 @@ body {
 
         .guess {
             padding: 4px 8px;
+            border-radius: 17px;
         }
 
         /* hand rotation helpers */
@@ -354,11 +361,15 @@ body {
 
 
 .highlight-green {
-    background-color: rgb(136, 245, 136) !important;
+    background-color: mediumspringgreen !important;
 }
 
 .highlight-red {
     background-color: rgb(255, 162, 162) !important;
+}
+
+.grey-name {
+    color: rgb(151, 151, 151);
 }
 
 .hide {
