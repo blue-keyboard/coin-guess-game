@@ -42,7 +42,10 @@ io.on('connection', socket => {
             pointsDistribution = []
             firstId = 0
             gameRounds = 0
-            players.forEach(player => player = null)
+            for (let i = 0; i < 4; i++) {
+                players[i] = null;
+            }
+            console.log(players)
             io.emit('game-ends')
         }
 
@@ -89,10 +92,14 @@ io.on('connection', socket => {
     // A player is ready to start, highlight to the rest of the players
     socket.on('player-is-ready', id => {
 
-        players[id].ready = true;
-        allReady = players.filter(p => p !== null).every(player => player.ready === true)
+        if (players.filter(p => p !== null).length === 1) {
+            socket.emit('only-one-player')
+        } else {
+            players[id].ready = true;
+            allReady = players.filter(p => p !== null).every(player => player.ready === true)
 
-        io.emit('player-is-ready', id, allReady)
+            io.emit('player-is-ready', id, allReady)
+        }
     })
 
     socket.on('display-players-points', () => {
@@ -201,10 +208,14 @@ io.on('connection', socket => {
                     pointsDistribution = []
                     firstId = 0
                     gameRounds = 0
-                    players.forEach(player => player = null)
+                    for (let i = 0; i < 4; i++) {
+                        players[i] = null;
+                    }
+                    console.log(players)
+
                     io.emit('game-ends')
                 } else {
-                    io.emit('loser-choose-id', loserPlayer.id)
+                    io.emit('loser-choose-id', loserPlayer.id, players)
                 }
 
             } else {

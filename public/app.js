@@ -40,7 +40,7 @@ socket.on('check-players-connected', (num, players, gameStart) => {
         players.filter(p => p !== null).forEach(player => {
             playerSpan = document.querySelector(`.player-name > .p${player.id}`)
             playerSpan.innerHTML = player.name
-            if (player.ready) playerSpan.classList.add('highlight-green')
+            if (player.ready && !gameStarted) playerSpan.classList.add('highlight-green')
         })
     }
 })
@@ -111,7 +111,7 @@ function enterLobby(playerName) {
 function displayReadyButtonOrRestart(myPlayer) {
     const readyButtonDisplay = `
             <div class="ready-button-display p${myPlayer.id}">
-                <span><b>When all players are ready the game will start</b></span>
+                <span>When all players are ready the game will start<br></span>
                 <div class="button ready-button" onclick="playerIsReady(${myPlayer.id})">I'm ready!</div>
             </div>
         `
@@ -136,6 +136,19 @@ function playerIsReady(id) {
     socket.emit('player-is-ready', id)
 }
 
+socket.on('only-one-player', () => {
+    gameInfoDisplay.innerHTML = `
+        <div>You can't play alone!<br>Wait for other players to join</div>
+    `
+    setTimeout(() => {
+        gameInfoDisplay.innerHTML = `
+        <div class="basic-info">
+            <span>Waiting for the other players to be ready</span>
+        </div>
+    `
+    }, 3000)
+})
+
 socket.on('player-is-ready', (id, allReady) => {
     if (allReady) {
         playerNameSpans.forEach(span => span.classList.remove('highlight-green'))
@@ -155,7 +168,7 @@ socket.on('display-players-points', players => {
         playersPointsHtml += `
             <div class="p${player.id}">
                 <div><b>${player.name}</b></div>
-                <div>Points: <b>${player.points}</b></div>
+                <div><b>${player.points}</b>&nbsp; pts.</div>
             </div>
         `
     })
@@ -358,14 +371,20 @@ socket.on('remove-grey-names', () => {
 })
 
 
-socket.on('loser-choose-id', id => {
+socket.on('loser-choose-id', (id, players) => {
     if (myPlayer.id === id) {
         gameInfoDisplay.innerHTML = `
-            <div class="input-new-first">
-                <div><b>New first:</b></div>
-                <input autocomplete="off" class="input-int" min="1" name="rounds" placeholder="" type="number">
-                <div class="button rounds-button" onclick="loserInputNewFirst()">OK</div>   
-            </div>
+                <div class="arrows-container">
+                    <div></div> 
+                    ${players[0] !== null ? '<div class="arrow" onclick="loserInputNewFirst(0)"><img src="svg/arrow-up.svg"></div>' : '<div></div>'}
+                    <div></div> 
+                    ${players[2] !== null ? '<div class="arrow" onclick="loserInputNewFirst(2)"><img src="svg/arrow-left.svg"></div>' : '<div></div>'}
+                    <div>Choose who starts next round</div>
+                    ${players[3] !== null ? '<div class="arrow" onclick="loserInputNewFirst(3)"><img src="svg/arrow-right.svg"></div>' : '<div></div>'}
+                    <div></div> 
+                    ${players[1] !== null ? '<div class="arrow" onclick="loserInputNewFirst(1)"><img src="svg/arrow-down.svg"></div>' : '<div></div>'}
+                    <div></div> 
+                </div>
         `
     } else {
         const loserName = document.querySelector(`.player-name > .p${id}`).innerHTML
@@ -377,19 +396,195 @@ socket.on('loser-choose-id', id => {
     }
 })
 
-function loserInputNewFirst() {
-    const newFirstInput = document.querySelector('.input-new-first > input')
-    let newFirstId = parseInt(newFirstInput.value)
-    socket.emit('loser-chose-first', newFirstId)
+function loserInputNewFirst(id) {
+    socket.emit('loser-chose-first', parseInt(id))
 }
 
 socket.on('game-ends', () => {
     gameInfoDisplay.innerHTML = `
         <div class="basic-info">
-            <span>GAME ENDED refresh the page</span>
+            <span>GAME ENDED, all players should refresh the page</span>
         </div>
     `
 })
+
+
+// function originalHtmlBody() {
+//     return `
+//         <header>
+//             <div class="header">
+//                 <span class="game-title">Coin Guess</span>
+//             </div>
+//         </header>
+
+
+//         <div class="container-welcome">
+
+//             <div class="container-welcome--info">
+//                 <div class="info-title">
+//                     <span>How to play</span>
+//                 </div>
+//                 <div class="info-text">
+//                     <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Molestias quae in dolorem atque cumque cum
+//                         nihil, id laborum rem corporis sunt dolore tenetur consequuntur vitae facere laboriosam inventore
+//                         ducimus voluptas laudantium eum placeat? Ipsa quis neque delectus ullam ipsam. Error dicta, qui
+//                         expedita inventore necessitatibus eius quidem voluptates rerum laboriosam, non sed nesciunt
+//                         consequuntur, sint earum! Unde praesentium quis ratione, consectetur voluptates quibusdam alias amet
+//                         vel in. Dolorum, animi impedit. Quidem ducimus deserunt maiores id eligendi nam repellendus earum
+//                         perspiciatis?</p>
+//                 </div>
+//             </div>
+
+//             <div class="container-welcome--join">
+//                 <div class="join-title">Join the lobby!</div>
+//                 <div class="join-info">
+//                     <span class='players-in-lobby'><b>0</b> players connected (MAX: 4)</span>
+//                 </div>
+//                 <div class="join-name">
+//                     <span>Name: </span>
+//                     <input type="text" value="">
+//                 </div>
+
+//                 <div class="button join">JOIN</div>
+
+//             </div>
+
+
+
+//         </div>
+
+//         <div class="welcome-popups hide">
+//             <div class="popup-info">
+//                 <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Id ratione iure voluptatem repellendus
+//                     provident repudiandae, dolorum repellat aut. Minima eos temporibus rerum. In tenetur delectus saepe
+//                     quam sequi quo et.</p>
+//                 <div class="button">
+//                     OK
+//                 </div>
+//             </div>
+//         </div>
+
+//         <div class="container-gameboard hide">
+
+//             <div class="gameboard">
+
+
+//                 <div class="player-name p0">
+//                     <span class="p0">
+//                         <div></div>
+//                     </span>
+//                 </div>
+
+
+//                 <div class="container-middle">
+
+//                     <div class="player-name p2">
+//                         <span class="p2">
+//                             <div></div>
+//                         </span>
+//                     </div>
+
+
+//                     <div class="table">
+//                         <div class="blank"></div>
+//                         <div class="p0 player-info pad-rl-25">
+//                             <div class="p0 guess-div">
+
+//                             </div>
+//                             <div class="p0 fist-hand">
+
+//                             </div>
+//                             <div class="p0 coins">
+
+//                             </div>
+//                         </div>
+//                         <div class="blank"></div>
+//                         <div class="p2 player-info">
+//                             <div class="p2 guess-div">
+
+//                             </div>
+//                             <div class="side">
+//                                 <div class="p2 fist-hand">
+
+//                                 </div>
+//                                 <div class="p2 coins">
+
+//                                 </div>
+//                             </div>
+//                             <div class="blank"></div>
+
+//                         </div>
+//                         <div class="game-info-display"></div>
+//                         <div class="p3 player-info">
+//                             <div class="p3 guess-div">
+
+//                             </div>
+//                             <div class="side">
+//                                 <div class="p3 coins">
+
+//                                 </div>
+//                                 <div class="p3 fist-hand">
+
+//                                 </div>
+//                             </div>
+//                             <div class="blank"></div>
+//                         </div>
+//                         <div class="test"></div>
+//                         <div class="p1 player-info pad-rl-25">
+//                             <div class="p1 coins">
+
+//                             </div>
+//                             <div class="p1 fist-hand">
+//                             </div>
+//                             <div class="p1 guess-div">
+
+//                             </div>
+//                         </div>
+//                         <div class="test"></div>
+//                     </div>
+
+//                     <div class="player-name p3">
+//                         <span class="p3">
+//                             <div></div>
+//                         </span>
+//                     </div>
+
+//                 </div>
+//                 <div class="name-container">
+//                     <div class="player-name p1">
+//                         <span class="p1">
+//                             <div></div>
+//                         </span>
+//                     </div>
+//                 </div>
+//             </div>
+
+//             <!-- TODO /****** TEMPLATES VSGS AND GUESS *******/ -->
+//             <!-- <div class="guess"><b>Guess: 10</b></div> -->
+
+//             <!-- <img class="hand-svg" src="svg/fist.svg"> -->
+
+//             <!-- <img class="hand-svg" src="svg/open-hand.svg"> -->
+
+//             <!-- <img class="coin-svg" src="svg/coin.svg"> -->
+
+//             <div class="leaderboard">
+//                 <!-- <div class="p0"></div>
+//                 <div class="p1"></div>
+//                 <div class="p2"></div>
+//                 <div class="p3"></div> -->
+//             </div>
+//         </div>
+
+
+//         <!-- <div>Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a>
+//             from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+//         <div>Icons made by <a href="" title="turkkub">turkkub</a> from <a href="https://www.flaticon.com/"
+//                 title="Flaticon">www.flaticon.com</a></div> -->
+//         <script src="/socket.io/socket.io.js"></script>
+//         <script src="app.js"></script>
+//     `
+// }
 
 
 
