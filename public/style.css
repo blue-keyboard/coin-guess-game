@@ -15,7 +15,7 @@ body {
     margin: 0;
     padding: 0;
     line-height: 1.1;
-    background-color: rgb(37, 37, 37);
+    background-color: #404e7c;
     height: 100vh;
 }
 
@@ -23,9 +23,9 @@ body {
 /* Header */
 .header {
     height: 80px;
-    background-color: #CA5164;
+    background-color: #404e7c;
     /* background-color: #675C5D; */
-    color: #ECD797;
+    color: #f8c128;
     display:flex;
     align-items: center;
     justify-content: center;
@@ -54,7 +54,7 @@ body {
 
 .container-gameboard {
     height: 90%;
-    background-color: #4e4446;
+    background-color: #404e7c;
     /* background-color: #685d5e; */
     /* background-color: #9ACFBE; */    
 }
@@ -62,7 +62,8 @@ body {
 
 .button {
     display: inline-block;
-    background-color: rgb(255, 172, 234);
+    background-color: #ff9ae1;
+    background-color: #ff9de2;
     cursor: pointer;
     padding: 0.2rem 1rem;
     border-radius: 10px;
@@ -159,7 +160,7 @@ body {
     height: 100%;
     width: 752px;
     border-radius: 1000px;
-    background-color: #9ACFBE;
+    background-color: #68d8d6;
     /* background-color: #CA5164; */
     overflow: hidden;
 }
@@ -231,9 +232,7 @@ body {
         justify-content: center;
         align-items: center;
         height: 33.33%;
-        /* outline: 1px solid black; */
     }
-
     
         .side > div {
             display: flex;
@@ -356,7 +355,7 @@ body {
         }
 
         .coins-div:hover {
-            background-color: rgb(241, 241, 241);
+            background-color: rgb(228, 228, 228);
         }
 
         /* .coins-div > img {
@@ -394,7 +393,7 @@ body {
     height: 100%;
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-columns: 1fr 4fr 1fr;
     grid-template-rows: 2fr 3fr 2fr;
 }
 

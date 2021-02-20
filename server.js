@@ -196,13 +196,12 @@ io.on('connection', socket => {
             if (playersIn.length - numPlayersOut === 2) {
                 gameRounds--;
                 loserPlayer = playersIn.find(player => !player.out)
-                loserPlayer.points = pointsDistribution[pointsDistribution.length - 1]
+                loserPlayer.points += pointsDistribution[pointsDistribution.length - 1]
                 playersIn.forEach(player => player.out = false)
 
                 io.emit('display-players-points', players.filter(player => player !== null))
 
                 if (gameRounds === 0) {
-                    io.emit('display-players-points', players.filter(player => player !== null))
                     gameStarted = false
                     turnOrder = []
                     pointsDistribution = []

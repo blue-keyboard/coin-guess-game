@@ -97,6 +97,7 @@ function popup(msg) {
 function enterLobby(playerName) {
     socket.emit('player-enter-lobby', playerName)
     socket.on('pass-player-obj', player => {
+        console.log('does it work?')
         myPlayer = player
         fistHandDiv = document.querySelector(`.p${myPlayer.id}.fist-hand`)
         myNameSpan = document.querySelector(`.player-name > .p${myPlayer.id}`)
@@ -126,7 +127,6 @@ socket.on('update-name-spans', (spanClass, playerName) => {
 
 // onclick event on the --ready button--
 function playerIsReady(id) {
-    myNameSpan.classList.add('highlight-green')
     myPlayer.ready = true
     gameInfoDisplay.innerHTML = `
         <div class="basic-info">
@@ -142,8 +142,9 @@ socket.on('only-one-player', () => {
     `
     setTimeout(() => {
         gameInfoDisplay.innerHTML = `
-        <div class="basic-info">
-            <span>Waiting for the other players to be ready</span>
+        <div class="ready-button-display p${myPlayer.id}">
+            <span>When all players are ready the game will start<br></span>
+            <div class="button ready-button" onclick="playerIsReady(${myPlayer.id})">I'm ready!</div>
         </div>
     `
     }, 3000)
@@ -241,22 +242,22 @@ socket.on('choose-coins', (correctPlayerId, players) => {
         `
     }
 
-    function playerOutGreyName(id) {
-        const playerNameSpan = document.querySelector(`.player-name > .p${id}`)
-        playerNameSpan.classList.add('grey-name')
-    }
-
-    function clearHandsCoins() {
-        playerCoinsDivs.forEach(div => div.innerHTML = '')
-        playerfistHandDivs.forEach(div => div.innerHTML = '')
-    }
-
-    function clearPlayerGuesses() {
-        playerGuessDivs.forEach(div => {
-            if (div.firstElementChild) div.removeChild(div.firstElementChild)
-        })
-    }
 })
+function playerOutGreyName(id) {
+    const playerNameSpan = document.querySelector(`.player-name > .p${id}`)
+    playerNameSpan.classList.add('grey-name')
+}
+
+function clearHandsCoins() {
+    playerCoinsDivs.forEach(div => div.innerHTML = '')
+    playerfistHandDivs.forEach(div => div.innerHTML = '')
+}
+
+function clearPlayerGuesses() {
+    playerGuessDivs.forEach(div => {
+        if (div.firstElementChild) div.removeChild(div.firstElementChild)
+    })
+}
 
 
 function playerCoins(num) {
@@ -372,6 +373,8 @@ socket.on('remove-grey-names', () => {
 
 
 socket.on('loser-choose-id', (id, players) => {
+    clearHandsCoins()
+    clearPlayerGuesses()
     if (myPlayer.id === id) {
         gameInfoDisplay.innerHTML = `
                 <div class="arrows-container">
@@ -390,7 +393,7 @@ socket.on('loser-choose-id', (id, players) => {
         const loserName = document.querySelector(`.player-name > .p${id}`).innerHTML
         gameInfoDisplay.innerHTML = `
             <div class="basic-info">
-                <span>${loserName} is choosing who goes first this round...</span>
+                <span><b>${loserName}</b> is choosing who goes first this round...</span>
             </div>
         `
     }
