@@ -109,12 +109,14 @@ chatInput.addEventListener('keyup', e => {
                 <div class="message"><b style="color:${playerColor(myPlayer.id)}"}>${myPlayer.name}:</b> <span>${message}</span></div>`
             socket.emit('chat-message', messageHtml)
             chatContainer.innerHTML += messageHtml
+            chatContainer.scrollTop = chatContainer.scrollHeight
         }
     }
 })
 
 socket.on('chat-message', message => {
     chatContainer.innerHTML += message
+    chatContainer.scrollTop = chatContainer.scrollHeight
 })
 
 function playerColor(id) {

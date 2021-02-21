@@ -51,7 +51,7 @@ body {
 .container-welcome--info {
     padding: 2rem 2.5rem 0.5rem 2.5rem;
     width: 600px;
-    font-size: 0.8;
+    font-size: 1.4rem;
     font-family: 'Indie Flower', cursive;
     font-weight: 500;
     line-height: 1.1;
@@ -442,6 +442,7 @@ input {
     }
 
     .chat-container {
+        overflow-y: scroll;
         font-family: cursive;
         overflow-wrap: break-word;
         background-color: rgb(243, 243, 243);
