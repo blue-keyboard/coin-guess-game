@@ -51,9 +51,11 @@ io.on('connection', socket => {
 
         if (playerNumber !== -1) {
             players[playerNumber] = null
+            let id = playerNumber
+            playerNumber = -1;
 
             // Tell everyone what player number just disconnected
-            socket.broadcast.emit('player-disconnects', playerNumber);
+            socket.broadcast.emit('player-disconnects', id);
             io.emit('check-players-connected', players.filter(p => p !== null).length, players, gameStarted)
         }
     })
@@ -89,6 +91,10 @@ io.on('connection', socket => {
         socket.broadcast.emit('update-name-spans', spanClass, playerName)
     })
 
+    socket.on('chat-message', message => {
+        socket.broadcast.emit('chat-message', message)
+    })
+
     // A player is ready to start, highlight to the rest of the players
     socket.on('player-is-ready', id => {
 
@@ -109,6 +115,7 @@ io.on('connection', socket => {
     // All players are ready, captain choose how many rounds
     socket.on('game-started', () => {
         gameStarted = true
+        io.emit('game-started')
         firstId = normalTurnOrder.find(id => players[id] !== null)
         console.log(firstId)
         io.emit('captain-choose-rounds', firstId, MAX_ROUNDS)
@@ -202,17 +209,23 @@ io.on('connection', socket => {
                 io.emit('display-players-points', players.filter(player => player !== null))
 
                 if (gameRounds === 0) {
+
+                    io.emit('remove-grey-names')
+                    io.emit('clear-leaderboard')
+                    io.emit('game-ends', players.filter(player => player !== null))
+
                     gameStarted = false
                     turnOrder = []
                     pointsDistribution = []
                     firstId = 0
                     gameRounds = 0
                     for (let i = 0; i < 4; i++) {
-                        players[i] = null;
+                        if (players[i] !== null) {
+                            players[i].ready = false;
+                            players[i].points = 0;
+                        }
                     }
-                    console.log(players)
 
-                    io.emit('game-ends')
                 } else {
                     io.emit('loser-choose-id', loserPlayer.id, players)
                 }

@@ -5,6 +5,9 @@ const joinButton = document.querySelector('.join')
 const playersInLobbyInfo = document.querySelector('.players-in-lobby > b')
 const welcomePopup = document.querySelector('.welcome-popups')
 const welcomePopupButton = welcomePopup.querySelector('.button')
+const chatContainer = document.querySelector('.chat-container')
+const chatInput = document.querySelector('.chat-input')
+
 
 // player game info components
 const playerNameSpans = document.querySelectorAll('.player-name > span')
@@ -68,8 +71,8 @@ function playerCanEnter(name) {
     if (name === '') {
         popup('You must input a name')
         return false
-    } else if (name.length > 14) {
-        popup('Chose a shorter name, no longer than 14 characters')
+    } else if (name.length > 10) {
+        popup('Chose a shorter name, no longer than 10 characters')
         return false
     } else if ([...playerNameSpans].some(span => span.innerHTML === name)) {
         popup('Sorry, another player has already that name')
@@ -91,6 +94,34 @@ function popup(msg) {
         welcomePopup.classList.add('hide')
     })
 }
+
+// CHAT 
+
+chatInput.addEventListener('keyup', e => {
+    if (e.keyCode === 13) {
+        let message = chatInput.value
+        if (message === '') return
+        else if (message.lentgh > 60) {
+            return
+        } else {
+            chatInput.value = ''
+            let messageHtml = `
+                <div class="message"><b style="color:${playerColor(myPlayer.id)}"}>${myPlayer.name}:</b> <span>${message}</span></div>`
+            socket.emit('chat-message', messageHtml)
+            chatContainer.innerHTML += messageHtml
+        }
+    }
+})
+
+socket.on('chat-message', message => {
+    chatContainer.innerHTML += message
+})
+
+function playerColor(id) {
+    const colors = ['purple', 'indianred', 'darkgreen', 'deeppink'];
+    return colors[id]
+}
+
 
 
 // Players enter to the lobby, all see who are in the lobby
@@ -161,6 +192,10 @@ socket.on('player-is-ready', (id, allReady) => {
     }
 })
 
+socket.on('game-started', () => {
+    gameStarted = true
+})
+
 socket.on('display-players-points', players => {
     players = players.sort((a, b) => b.points - a.points)
     leaderboard.innerHTML = ''
@@ -180,10 +215,24 @@ socket.on('captain-choose-rounds', (id, max) => {
     if (myPlayer.id === id) {
         // display rounds form
         gameInfoDisplay.innerHTML = `
-            <div class="input-rounds">
-                <div><b>Rounds:</b></div>
-                <input autocomplete="off" class="input-int" min="1" name="rounds" placeholder="" type="number">
-                <div class="button rounds-button" onclick="giveRoundsInfo(${max})">OK</div>
+            <div class="input-ingame">
+            <div class="margin-bot"><b>Rounds:</b></div>
+                <div class="input-button">
+                    <div class="input-up-down">
+                        <div onclick="incrementDecrementInput(1)">
+                            <img src="svg/input-increment.svg">
+                        </div>
+                        <div>
+                            <input autofocus autocomplete="off" class="input-int" name="rounds" type="number" min="1" max="12" placeholder="">
+                        </div>
+                        <div onclick="incrementDecrementInput(-1)">
+                            <img src="svg/input-decrement.svg">
+                        </div>
+                    </div>
+                    <div class="flex-al-c">
+                        <div class="button guess-button" onclick="giveRoundsInfo(${max})">OK</div>
+                    </div>
+                </div>
             </div>
         `
     } else {
@@ -196,12 +245,22 @@ socket.on('captain-choose-rounds', (id, max) => {
     }
 })
 
+function incrementDecrementInput(num) {
+    const inputBox = document.querySelector('.input-int')
+
+    if (inputBox.value === '') {
+        if (parseInt(num) === 1) inputBox.value = 1
+        else inputBox.value = 0
+    } else if (parseInt(inputBox.value) <= 0 && parseInt(num) === -1) return
+    else inputBox.value = parseInt(inputBox.value) + parseInt(num)
+}
+
 // Pass to the server the rounds when captain clicks the rounds-button
 function giveRoundsInfo(max) {
-    const roundsInput = document.querySelector('.input-rounds > input')
+    const roundsInput = document.querySelector('.input-int')
     let rounds = roundsInput.value
 
-    if (rounds < 0 || rounds > max || [...rounds].includes('.')) {
+    if ([...rounds].includes('e') || rounds < 1 || rounds > max || [...rounds].includes('.')) {
         roundsInput.classList.add('highlight-red')
     } else {
         socket.emit('rounds', parseInt(rounds))
@@ -285,10 +344,25 @@ socket.on('guessing-phase', (turn, players, turnOrder, allreadyGuessed) => {
 
     if (myPlayer.id === turn) {
         gameInfoDisplay.innerHTML = `
-            <div class="input-guess">
-                <div><b>Guess:</b></div>
-                <input autocomplete="off" class="input-int" min="0" name="guess" placeholder="" type="number">
-                <div class="button guess-button" onclick="playerGuess()">OK</div>
+            <div class="input-ingame">
+            <div class="margin-bot"><b>Guess:</b></div>
+                <div class="input-button">
+                    <div class="input-up-down">
+                        <div onclick="incrementDecrementInput(1)">
+                            <img src="svg/input-increment.svg">
+                        </div>
+                        <div>
+                            <input autofocus autocomplete="off" class="input-int" type="number" min="0" max="12" name="guess"
+                                placeholder="">
+                        </div>
+                        <div onclick="incrementDecrementInput(-1)">
+                            <img src="svg/input-decrement.svg">
+                        </div>
+                    </div>
+                    <div class="flex-al-c">
+                        <div class="button guess-button" onclick="playerGuess()">OK</div>
+                    </div>
+                </div>
             </div>
         `
     } else {
@@ -300,10 +374,10 @@ socket.on('guessing-phase', (turn, players, turnOrder, allreadyGuessed) => {
     }
 })
 function playerGuess() {
-    const guessInput = document.querySelector('.input-guess > input')
+    const guessInput = document.querySelector('.input-int')
     let guess = guessInput.value
 
-    if (parseInt(guess) < 0 || [...guess].includes('.') || allrGuessed.includes(parseInt(guess))) {
+    if (guess === 'e' || [...guess].includes('e') || parseInt(guess) < 0 || [...guess].includes('.') || allrGuessed.includes(parseInt(guess))) {
         guessInput.classList.add('highlight-red')
     } else {
         myNameSpan.classList.remove('outline-name-black')
@@ -337,7 +411,7 @@ socket.on('show-results', players => {
 
     setTimeout(displayResult, 1500)
     setTimeout(displayWhoCorrect, 1500 + 700)
-    setTimeout(emitPhaseDoneToServer, 1500 + 700 + 2000)
+    setTimeout(emitPhaseDoneToServer, 1500 + 700 + 3000)
 
     function displayResult() {
         gameInfoDisplay.innerHTML = `<span class="result">${result}</span>`
@@ -403,192 +477,34 @@ function loserInputNewFirst(id) {
     socket.emit('loser-chose-first', parseInt(id))
 }
 
-socket.on('game-ends', () => {
+socket.on('clear-leaderboard', () => {
+    leaderboard.innerHTML = ''
+})
+
+socket.on('game-ends', players => {
+    clearHandsCoins()
+    clearPlayerGuesses()
+    gameStarted = false
+    players = players.sort((a, b) => b.points - a.points)
+    let leaderboard = '';
+
+    players.forEach((p, i) => {
+        if (i === 0) leaderboard += `<div class="big flex-sb"><span>1. ${p.name}</span><span>${p.points} pts.</span></div>`
+        else leaderboard += `<div class="flex-sb"><span>${i + 1}. ${p.name}</span><span>${p.points} pts.</span></div>`
+    })
+
     gameInfoDisplay.innerHTML = `
-        <div class="basic-info">
-            <span>GAME ENDED, all players should refresh the page</span>
+        <div class="leaderboard-end"> 
+            <div class="leaderboard-names">
+                ${leaderboard}
+            </div>
+            <div class="e-pa-buttons">
+                <div class="button exit-btn"><a href="index.html">Exit</a></div>
+                <div class="button pa-btn" onclick="playerIsReady(${myPlayer.id})">Play Again!</div>
+            </div>
         </div>
     `
 })
-
-
-// function originalHtmlBody() {
-//     return `
-//         <header>
-//             <div class="header">
-//                 <span class="game-title">Coin Guess</span>
-//             </div>
-//         </header>
-
-
-//         <div class="container-welcome">
-
-//             <div class="container-welcome--info">
-//                 <div class="info-title">
-//                     <span>How to play</span>
-//                 </div>
-//                 <div class="info-text">
-//                     <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Molestias quae in dolorem atque cumque cum
-//                         nihil, id laborum rem corporis sunt dolore tenetur consequuntur vitae facere laboriosam inventore
-//                         ducimus voluptas laudantium eum placeat? Ipsa quis neque delectus ullam ipsam. Error dicta, qui
-//                         expedita inventore necessitatibus eius quidem voluptates rerum laboriosam, non sed nesciunt
-//                         consequuntur, sint earum! Unde praesentium quis ratione, consectetur voluptates quibusdam alias amet
-//                         vel in. Dolorum, animi impedit. Quidem ducimus deserunt maiores id eligendi nam repellendus earum
-//                         perspiciatis?</p>
-//                 </div>
-//             </div>
-
-//             <div class="container-welcome--join">
-//                 <div class="join-title">Join the lobby!</div>
-//                 <div class="join-info">
-//                     <span class='players-in-lobby'><b>0</b> players connected (MAX: 4)</span>
-//                 </div>
-//                 <div class="join-name">
-//                     <span>Name: </span>
-//                     <input type="text" value="">
-//                 </div>
-
-//                 <div class="button join">JOIN</div>
-
-//             </div>
-
-
-
-//         </div>
-
-//         <div class="welcome-popups hide">
-//             <div class="popup-info">
-//                 <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Id ratione iure voluptatem repellendus
-//                     provident repudiandae, dolorum repellat aut. Minima eos temporibus rerum. In tenetur delectus saepe
-//                     quam sequi quo et.</p>
-//                 <div class="button">
-//                     OK
-//                 </div>
-//             </div>
-//         </div>
-
-//         <div class="container-gameboard hide">
-
-//             <div class="gameboard">
-
-
-//                 <div class="player-name p0">
-//                     <span class="p0">
-//                         <div></div>
-//                     </span>
-//                 </div>
-
-
-//                 <div class="container-middle">
-
-//                     <div class="player-name p2">
-//                         <span class="p2">
-//                             <div></div>
-//                         </span>
-//                     </div>
-
-
-//                     <div class="table">
-//                         <div class="blank"></div>
-//                         <div class="p0 player-info pad-rl-25">
-//                             <div class="p0 guess-div">
-
-//                             </div>
-//                             <div class="p0 fist-hand">
-
-//                             </div>
-//                             <div class="p0 coins">
-
-//                             </div>
-//                         </div>
-//                         <div class="blank"></div>
-//                         <div class="p2 player-info">
-//                             <div class="p2 guess-div">
-
-//                             </div>
-//                             <div class="side">
-//                                 <div class="p2 fist-hand">
-
-//                                 </div>
-//                                 <div class="p2 coins">
-
-//                                 </div>
-//                             </div>
-//                             <div class="blank"></div>
-
-//                         </div>
-//                         <div class="game-info-display"></div>
-//                         <div class="p3 player-info">
-//                             <div class="p3 guess-div">
-
-//                             </div>
-//                             <div class="side">
-//                                 <div class="p3 coins">
-
-//                                 </div>
-//                                 <div class="p3 fist-hand">
-
-//                                 </div>
-//                             </div>
-//                             <div class="blank"></div>
-//                         </div>
-//                         <div class="test"></div>
-//                         <div class="p1 player-info pad-rl-25">
-//                             <div class="p1 coins">
-
-//                             </div>
-//                             <div class="p1 fist-hand">
-//                             </div>
-//                             <div class="p1 guess-div">
-
-//                             </div>
-//                         </div>
-//                         <div class="test"></div>
-//                     </div>
-
-//                     <div class="player-name p3">
-//                         <span class="p3">
-//                             <div></div>
-//                         </span>
-//                     </div>
-
-//                 </div>
-//                 <div class="name-container">
-//                     <div class="player-name p1">
-//                         <span class="p1">
-//                             <div></div>
-//                         </span>
-//                     </div>
-//                 </div>
-//             </div>
-
-//             <!-- TODO /****** TEMPLATES VSGS AND GUESS *******/ -->
-//             <!-- <div class="guess"><b>Guess: 10</b></div> -->
-
-//             <!-- <img class="hand-svg" src="svg/fist.svg"> -->
-
-//             <!-- <img class="hand-svg" src="svg/open-hand.svg"> -->
-
-//             <!-- <img class="coin-svg" src="svg/coin.svg"> -->
-
-//             <div class="leaderboard">
-//                 <!-- <div class="p0"></div>
-//                 <div class="p1"></div>
-//                 <div class="p2"></div>
-//                 <div class="p3"></div> -->
-//             </div>
-//         </div>
-
-
-//         <!-- <div>Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a>
-//             from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
-//         <div>Icons made by <a href="" title="turkkub">turkkub</a> from <a href="https://www.flaticon.com/"
-//                 title="Flaticon">www.flaticon.com</a></div> -->
-//         <script src="/socket.io/socket.io.js"></script>
-//         <script src="app.js"></script>
-//     `
-// }
-
 
 
 
